@@ -6,8 +6,8 @@ app.use(express.json());
 
 // CONFIGURACIÓN
 const GROUP_ID = 34759104;
-const VIP_ROLE_ID = 601056109; // tu rol VIP real
-const COOKIE = process.env.ROBLOX_COOKIE;
+const VIP_ROLE_ID = 601056109; // rol VIP real
+const COOKIE = process.env.ROBLOSECURITY; // ← CORREGIDO
 
 // Verificar si el usuario está en el grupo
 async function isGroupMember(userId) {
