@@ -1,21 +1,58 @@
-const express = require("express");
+import express from "express";
+import fetch from "node-fetch";
+
 const app = express();
 app.use(express.json());
 
-app.get("/", (req, res) => {
-    res.send("Servidor funcionando correctamente ✔️");
-});
+// CONFIGURACIÓN
+const GROUP_ID = 34759104;
+const VIP_ROLE_ID = 601056109; // tu rol VIP real
+const COOKIE = process.env.ROBLOX_COOKIE;
 
-// Endpoint para verificar roles
-app.post("/checkrole", (req, res) => {
+// Verificar si el usuario está en el grupo
+async function isGroupMember(userId) {
+    const res = await fetch(`https://groups.roblox.com/v1/users/${userId}/groups/roles`);
+    const data = await res.json();
+
+    if (!data.data) return false;
+
+    return data.data.some(group => group.group.id === GROUP_ID);
+}
+
+// Asignar el rol VIP
+async function giveRole(userId) {
+    return fetch(`https://groups.roblox.com/v1/groups/${GROUP_ID}/users/${userId}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Cookie": `.ROBLOSECURITY=${COOKIE}`
+        },
+        body: JSON.stringify({
+            roleId: VIP_ROLE_ID
+        })
+    });
+}
+
+// Endpoint principal que Roblox llama
+app.post("/give-role", async (req, res) => {
     const { userId } = req.body;
 
     if (!userId) {
-        return res.status(400).json({ error: "Falta userId" });
+        return res.json({ error: "Falta userId" });
     }
 
-    // Aquí pones tu verificación real después
-    res.json({ ok: true, role: "VIP" });
+    if (!await isGroupMember(userId)) {
+        return res.json({ ok: false, reason: "No está en el grupo" });
+    }
+
+    await giveRole(userId);
+
+    res.json({ ok: true, message: "Rol VIP asignado" });
+});
+
+// Página principal
+app.get("/", (req, res) => {
+    res.send("Servidor funcionando correctamente ✔️");
 });
 
 app.listen(3000, () => {
